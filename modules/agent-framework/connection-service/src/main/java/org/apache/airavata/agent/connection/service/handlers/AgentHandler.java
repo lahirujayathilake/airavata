@@ -196,21 +196,21 @@ public class AgentHandler extends AgentCommunicationServiceGrpc.AgentCommunicati
             public void onNext(AgentMessage request) {
 
                 switch (request.getMessageCase()) {
-                    case AGENTPING -> {
+                    case AGENTPING:
                         handleAgentPing(request.getAgentPing(), streamId);
-                    }
-                    case COMMANDEXECUTIONRESPONSE -> {
+                        break;
+                    case COMMANDEXECUTIONRESPONSE:
                         handleCommandExecutionResponse(request.getCommandExecutionResponse());
-                    }
-                    case CONTAINEREXECUTIONRESPONSE -> {
+                        break;
+                    case CONTAINEREXECUTIONRESPONSE:
                         handleContainerExecutionResponse(request.getContainerExecutionResponse());
-                    }
-                    case TERMINATEEXECUTIONRESPONSE -> {
+                        break;
+                    case TERMINATEEXECUTIONRESPONSE:
                         handleAgentTerminationResponse(request.getTerminateExecutionResponse());
-                    }
-                    case JUPYTEREXECUTIONRESPONSE -> {
+                        break;
+                    case JUPYTEREXECUTIONRESPONSE:
                         handleJupyterExecutionResponse(request.getJupyterExecutionResponse());
-                    }
+                        break;
                 }
             }
 
