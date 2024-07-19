@@ -12,9 +12,6 @@
 
     <artifactId>agent-framework</artifactId>
     <packaging>pom</packaging>
-    <modules>
-        <module>connection-service</module>
-    </modules>
 
     <properties>
         <maven.compiler.source>11</maven.compiler.source>
