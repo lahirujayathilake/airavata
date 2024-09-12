@@ -39,6 +39,7 @@ public class AgentStore {
 
     // compute resource: Job submission protocol: auth token: user: adaptor
     private final Map<String, Map<JobSubmissionProtocol, Map<String, Map<String, AgentAdaptor>>>> agentAdaptorCache = new HashMap<>();
+    private final Map<String, Map<DataMovementProtocol, Map<String, Map<String, AgentAdaptor>>>> computeStorageAdaptorCache = new HashMap<>();
     private final Map<String, Map<DataMovementProtocol, Map<String, Map<String, StorageResourceAdaptor>>>> storageAdaptorCache = new HashMap<>();
 
     public Optional<AgentAdaptor> getAgentAdaptor(String computeResource, JobSubmissionProtocol submissionProtocol, String authToken, String userId) {
@@ -65,6 +66,20 @@ public class AgentStore {
         Map<String, Map<String,AgentAdaptor>> tokenToUserMap = protoToTokenMap.computeIfAbsent(submissionProtocol, k -> new HashMap<>());
         Map<String, AgentAdaptor> userToAdaptorMap = tokenToUserMap.computeIfAbsent(authToken, k-> new HashMap<>());
         userToAdaptorMap.put(userId, agentAdaptor);
+    }
+
+    public Optional<AgentAdaptor> getComputeStorageAdaptor(String computeResource, DataMovementProtocol dataMovementProtocol, String authToken, String userId) {
+        return Optional.ofNullable(computeStorageAdaptorCache.get(computeResource))
+                .map(protoToTokenMap -> protoToTokenMap.get(dataMovementProtocol))
+                .map(tokenToUserMap -> tokenToUserMap.get(authToken))
+                .map(userToAdaptorMap -> userToAdaptorMap.get(userId));
+    }
+
+    public void putComputeStorageAdaptor(String computeResource, DataMovementProtocol submissionProtocol, String authToken, String userId, AgentAdaptor agentAdaptor) {
+        computeStorageAdaptorCache.computeIfAbsent(computeResource, k -> new HashMap<>())
+                .computeIfAbsent(submissionProtocol, k -> new HashMap<>())
+                .computeIfAbsent(authToken, k -> new HashMap<>())
+                .put(userId, agentAdaptor);
     }
 
     public Optional<StorageResourceAdaptor> getStorageAdaptor(String computeResource, DataMovementProtocol dataMovementProtocol, String authToken, String userId) {

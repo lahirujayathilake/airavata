@@ -19,7 +19,6 @@
  */
 package org.apache.airavata.helix.adaptor;
 
-import com.google.common.collect.Lists;
 import net.schmizz.keepalive.KeepAliveProvider;
 import net.schmizz.sshj.DefaultConfig;
 import net.schmizz.sshj.connection.ConnectionException;
@@ -210,22 +209,35 @@ public class SSHJAgentAdaptor implements AgentAdaptor {
 
     @Override
     public void createDirectory(String path, boolean recursive) throws AgentException {
-        SFTPClientWrapper sftpClient = null;
+        SessionWrapper session = null;
         try {
-            sftpClient = sshjClient.newSFTPClientWrapper();
+            session = sshjClient.startSessionWrapper();
+            String command;
             if (recursive) {
-                sftpClient.mkdirs(path);
+                command = "mkdir -p " + path;
             } else {
-                sftpClient.mkdir(path);
+                command = "mkdir " + path;
             }
+
+            Session.Command exec = session.exec(command);
+            StandardOutReader standardOutReader = new StandardOutReader();
+
+            try {
+                standardOutReader.readStdOutFromStream(exec.getInputStream());
+                standardOutReader.readStdErrFromStream(exec.getErrorStream());
+            } finally {
+                exec.close();
+                standardOutReader.setExitCode(Optional.ofNullable(exec.getExitStatus()).orElseThrow(() -> new Exception("Exit status received as null")));
+            }
+
         } catch (Exception e) {
             if (e instanceof ConnectionException) {
-                Optional.ofNullable(sftpClient).ifPresent(ft -> ft.setErrored(true));
+                Optional.ofNullable(session).ifPresent(ft -> ft.setErrored(true));
             }
             throw new AgentException(e);
 
         } finally {
-            Optional.ofNullable(sftpClient).ifPresent(client -> {
+            Optional.ofNullable(session).ifPresent(client -> {
                 try {
                     client.close();
                 } catch (IOException e) {

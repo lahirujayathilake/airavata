@@ -122,4 +122,44 @@ public class AdaptorSupportImpl implements AdaptorSupport {
             }
         }
     }
+
+    public AgentAdaptor fetchComputeResourceStorageAdaptor(String gatewayId, String computeResourceId, DataMovementProtocol protocol, String authToken, String userId) throws AgentException {
+        logger.debug("Fetching adaptor for compute resource storage {} with token {} with user {} with protocol {}",
+                computeResourceId, authToken, userId, protocol.name());
+
+        Optional<AgentAdaptor> agentAdaptorOp = agentStore.getComputeStorageAdaptor(computeResourceId, protocol, authToken, userId);
+        if (agentAdaptorOp.isPresent()) {
+            logger.debug("Reusing the storage adaptor for gateway {}, compute resource storage {}, protocol {}, user {}",
+                    gatewayId, computeResourceId, protocol, userId);
+            return agentAdaptorOp.get();
+        }
+
+        synchronized (this) {
+            agentAdaptorOp = agentStore.getComputeStorageAdaptor(computeResourceId, protocol, authToken, userId);
+            if (agentAdaptorOp.isPresent()) {
+                return agentAdaptorOp.get();
+            }
+
+            logger.debug("Could not find a storage adaptor for gateway {}, compute resource {}, protocol {}, user {}. Creating new one",
+                    gatewayId, computeResourceId, protocol, userId);
+
+            AgentAdaptor storageResourceAdaptor;
+            if (protocol == DataMovementProtocol.SCP) {
+                storageResourceAdaptor = new SSHJStorageAdaptor();
+                storageResourceAdaptor.init(computeResourceId, gatewayId, userId, authToken);
+            } else {
+                throw new AgentException("Could not find a storage adaptor for gateway " + gatewayId +
+                        ", compute resource " + computeResourceId + ", protocol " + protocol + ", user " + userId);
+            }
+
+            agentStore.putComputeStorageAdaptor(computeResourceId, protocol, authToken, userId, storageResourceAdaptor);
+            return storageResourceAdaptor;
+        }
+    }
+
+    public ComputeResourceAdaptor fetchComputeResourceAdaptor(String gatewayId, String computeResourceId, JobSubmissionProtocol jobSubmissionProtocol,
+                                                              DataMovementProtocol dataMovementProtocol, String authToken, String userId) throws AgentException {
+        return new ComputeResourceAdaptor(fetchAdaptor(gatewayId, computeResourceId, jobSubmissionProtocol, authToken, userId),
+                fetchComputeResourceStorageAdaptor(gatewayId, computeResourceId, dataMovementProtocol, authToken, userId));
+    }
 }
