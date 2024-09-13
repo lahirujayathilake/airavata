@@ -17,26 +17,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.airavata.helix.core.support.adaptor;
+package org.apache.airavata.agents.api;
 
-import org.apache.airavata.agents.api.AgentAdaptor;
+public interface ComputeResourceAdaptor {
 
-public class ComputeResourceAdaptor {
-
-    private final AgentAdaptor jobSubmissionAdaptor;
-    private final AgentAdaptor dataMovementAdaptor;
-
-
-    public ComputeResourceAdaptor(AgentAdaptor jobSubmissionAdaptor, AgentAdaptor dataMovementAdaptor) {
-        this.jobSubmissionAdaptor = jobSubmissionAdaptor;
-        this.dataMovementAdaptor = dataMovementAdaptor;
-    }
-
-    public AgentAdaptor jobSubmissionAdaptor() {
-        return jobSubmissionAdaptor;
-    }
-
-    public AgentAdaptor dataMovementAdaptor() {
-        return dataMovementAdaptor;
-    }
+    AgentAdaptor jobSubmissionAdaptor();
+    AgentAdaptor dataMovementAdaptor();
 }

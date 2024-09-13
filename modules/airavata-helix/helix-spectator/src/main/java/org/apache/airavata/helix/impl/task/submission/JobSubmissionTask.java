@@ -22,6 +22,7 @@ package org.apache.airavata.helix.impl.task.submission;
 import org.apache.airavata.agents.api.AgentAdaptor;
 import org.apache.airavata.agents.api.AgentException;
 import org.apache.airavata.agents.api.CommandOutput;
+import org.apache.airavata.agents.api.ComputeResourceAdaptor;
 import org.apache.airavata.agents.api.JobSubmissionOutput;
 import org.apache.airavata.common.exception.ApplicationSettingsException;
 import org.apache.airavata.common.utils.AiravataUtils;
@@ -56,7 +57,7 @@ public abstract class JobSubmissionTask extends AiravataTask {
 
 
     @SuppressWarnings("WeakerAccess")
-    protected JobSubmissionOutput submitBatchJob(AgentAdaptor agentAdaptor, GroovyMapData groovyMapData, String workingDirectory) throws Exception {
+    protected JobSubmissionOutput submitBatchJob(ComputeResourceAdaptor agentAdaptor, GroovyMapData groovyMapData, String workingDirectory) throws Exception {
         JobManagerConfiguration jobManagerConfiguration = JobFactory.getJobManagerConfiguration(JobFactory.getResourceJobManager(
                 getRegistryServiceClient(), getTaskContext().getJobSubmissionProtocol(), getTaskContext().getPreferredJobSubmissionInterface()));
 
@@ -76,14 +77,14 @@ public abstract class JobSubmissionTask extends AiravataTask {
 
         logger.info("Copying file form " + tempJobFile.getAbsolutePath() + " to remote path " + workingDirectory +
                 " of compute resource " + getTaskContext().getComputeResourceId());
-        agentAdaptor.uploadFile(tempJobFile.getAbsolutePath(), workingDirectory);
+        agentAdaptor.dataMovementAdaptor().uploadFile(tempJobFile.getAbsolutePath(), workingDirectory);
 
         RawCommandInfo submitCommand = jobManagerConfiguration.getSubmitCommand(workingDirectory, tempJobFile.getPath());
 
         logger.info("Submit command for process id " + getProcessId() + " : " + submitCommand.getRawCommand());
         logger.debug("Working directory for process id " + getProcessId() + " : " + workingDirectory);
 
-        CommandOutput commandOutput = submitCommandWithRecording(submitCommand, agentAdaptor, groovyMapData, workingDirectory);
+        CommandOutput commandOutput = submitCommandWithRecording(submitCommand, agentAdaptor.jobSubmissionAdaptor(), groovyMapData, workingDirectory);
         logger.info("Job " + groovyMapData.getJobName() + " submitted to compute resource");
         logger.info("Submission stdout: " + commandOutput.getStdOut() + ", stderr: " + commandOutput.getStdError());
 

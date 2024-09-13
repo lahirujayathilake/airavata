@@ -20,6 +20,7 @@
 package org.apache.airavata.helix.impl.task.submission;
 
 import org.apache.airavata.agents.api.AgentAdaptor;
+import org.apache.airavata.agents.api.ComputeResourceAdaptor;
 import org.apache.airavata.agents.api.JobSubmissionOutput;
 import org.apache.airavata.common.utils.AiravataUtils;
 import org.apache.airavata.helix.impl.task.TaskContext;
@@ -55,10 +56,11 @@ public class ForkJobSubmissionTask extends JobSubmissionTask {
             jobModel.setTaskId(getTaskId());
             jobModel.setJobName(mapData.getJobName());
 
-            AgentAdaptor adaptor = taskHelper.getAdaptorSupport().fetchAdaptor(
+            ComputeResourceAdaptor adaptor = taskHelper.getAdaptorSupport().fetchComputeResourceAdaptor(
                     getTaskContext().getGatewayId(),
                     getTaskContext().getComputeResourceId(),
                     getTaskContext().getJobSubmissionProtocol(),
+                    getTaskContext().getDataMovementProtocol(),
                     getTaskContext().getComputeResourceCredentialToken(),
                     getTaskContext().getComputeResourceLoginUserName());
 

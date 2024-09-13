@@ -21,6 +21,7 @@ package org.apache.airavata.helix.core.support.adaptor;
 
 import org.apache.airavata.agents.api.*;
 import org.apache.airavata.helix.adaptor.SSHJAgentAdaptor;
+import org.apache.airavata.helix.adaptor.SSHJComputeStorageAdaptor;
 import org.apache.airavata.helix.adaptor.SSHJStorageAdaptor;
 import org.apache.airavata.helix.task.api.support.AdaptorSupport;
 import org.apache.airavata.model.appcatalog.computeresource.JobSubmissionProtocol;
@@ -143,23 +144,32 @@ public class AdaptorSupportImpl implements AdaptorSupport {
             logger.debug("Could not find a storage adaptor for gateway {}, compute resource {}, protocol {}, user {}. Creating new one",
                     gatewayId, computeResourceId, protocol, userId);
 
-            AgentAdaptor storageResourceAdaptor;
+            SSHJComputeStorageAdaptor computeResourceStorageAdaptor;
             if (protocol == DataMovementProtocol.SCP) {
-                storageResourceAdaptor = new SSHJStorageAdaptor();
-                storageResourceAdaptor.init(computeResourceId, gatewayId, userId, authToken);
+                computeResourceStorageAdaptor = new SSHJComputeStorageAdaptor();
+                computeResourceStorageAdaptor.init(computeResourceId, gatewayId, userId, authToken);
             } else {
                 throw new AgentException("Could not find a storage adaptor for gateway " + gatewayId +
                         ", compute resource " + computeResourceId + ", protocol " + protocol + ", user " + userId);
             }
 
-            agentStore.putComputeStorageAdaptor(computeResourceId, protocol, authToken, userId, storageResourceAdaptor);
-            return storageResourceAdaptor;
+            agentStore.putComputeStorageAdaptor(computeResourceId, protocol, authToken, userId, computeResourceStorageAdaptor);
+            return computeResourceStorageAdaptor;
         }
     }
 
     public ComputeResourceAdaptor fetchComputeResourceAdaptor(String gatewayId, String computeResourceId, JobSubmissionProtocol jobSubmissionProtocol,
-                                                              DataMovementProtocol dataMovementProtocol, String authToken, String userId) throws AgentException {
-        return new ComputeResourceAdaptor(fetchAdaptor(gatewayId, computeResourceId, jobSubmissionProtocol, authToken, userId),
-                fetchComputeResourceStorageAdaptor(gatewayId, computeResourceId, dataMovementProtocol, authToken, userId));
+                                                                  DataMovementProtocol dataMovementProtocol, String authToken, String userId) throws AgentException {
+
+        AgentAdaptor agentAdaptor = fetchAdaptor(gatewayId, computeResourceId, jobSubmissionProtocol, authToken, userId);
+        AgentAdaptor computeResourceStorageAdaptor = null;
+        try {
+            computeResourceStorageAdaptor = fetchComputeResourceStorageAdaptor(gatewayId, computeResourceId, dataMovementProtocol, authToken, userId);
+        } catch (AgentException e) {
+            // ignore
+        }
+
+        // If there's no data movement defined for the compute resource fallback to the agent adaptor
+        return new ComputeResourceAdaptorImpl(agentAdaptor, computeResourceStorageAdaptor == null ? agentAdaptor : computeResourceStorageAdaptor);
     }
 }

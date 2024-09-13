@@ -80,7 +80,7 @@ public class ArchiveTask extends DataStagingTask {
             // Fetch and validate storage adaptor
             StorageResourceAdaptor storageResourceAdaptor = getStorageAdaptor(taskHelper.getAdaptorSupport());
             // Fetch and validate compute resource adaptor
-            AgentAdaptor adaptor = getComputeResourceAdaptor(taskHelper.getAdaptorSupport());
+            ComputeResourceAdaptor adaptor = getComputeResourceAdaptor(taskHelper.getAdaptorSupport());
 
             // Creating the tar file in the output path of the compute resource
             // Finds the list of files that do not include directories and symlinks
@@ -90,7 +90,7 @@ public class ArchiveTask extends DataStagingTask {
             logger.info("Running tar creation command " + tarringCommand);
 
             try {
-                CommandOutput tarCommandOutput = adaptor.executeCommand(tarringCommand, null);
+                CommandOutput tarCommandOutput = adaptor.jobSubmissionAdaptor().executeCommand(tarringCommand, null);
                 if (tarCommandOutput.getExitCode() != 0) {
                     throw new TaskOnFailException("Failed while running the tar command " + tarringCommand + ". Sout : " +
                             tarCommandOutput.getStdOut() + ". Serr " + tarCommandOutput.getStdError(), false, null);
@@ -101,11 +101,11 @@ public class ArchiveTask extends DataStagingTask {
             }
 
             try {
-                FileMetadata fileMetadata = adaptor.getFileMetadata(tarCreationAbsPath);
+                FileMetadata fileMetadata = adaptor.dataMovementAdaptor().getFileMetadata(tarCreationAbsPath);
                 long maxArchiveSize = Long.parseLong(ServerSettings.getSetting("max.archive.size", MAX_ARCHIVE_SIZE + ""));
 
                 if (fileMetadata.getSize() < maxArchiveSize) {
-                    boolean fileTransferred = transferFileToStorage(tarCreationAbsPath, destFilePath, archiveFileName, adaptor, storageResourceAdaptor);
+                    boolean fileTransferred = transferFileToStorage(tarCreationAbsPath, destFilePath, archiveFileName, adaptor.dataMovementAdaptor(), storageResourceAdaptor);
                     if (!fileTransferred) {
                         logger.error("Failed to transfer created archive file " + tarCreationAbsPath);
                         throw new TaskOnFailException("Failed to transfer created archive file " + tarCreationAbsPath, false, null);
@@ -145,7 +145,7 @@ public class ArchiveTask extends DataStagingTask {
                 String deleteTarCommand = "rm " + tarCreationAbsPath;
                 logger.info("Running delete temporary tar command " + deleteTarCommand);
                 try {
-                    CommandOutput rmCommandOutput = adaptor.executeCommand(deleteTarCommand, null);
+                    CommandOutput rmCommandOutput = adaptor.jobSubmissionAdaptor().executeCommand(deleteTarCommand, null);
                     if (rmCommandOutput.getExitCode() != 0) {
                         logger.error("Failed while running the rm command " + deleteTarCommand + ". Sout : " +
                                 rmCommandOutput.getStdOut() + ". Serr " + rmCommandOutput.getStdError());

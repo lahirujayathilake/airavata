@@ -21,6 +21,7 @@ package org.apache.airavata.helix.impl.task.staging;
 
 import org.apache.airavata.agents.api.AgentAdaptor;
 import org.apache.airavata.agents.api.AgentException;
+import org.apache.airavata.agents.api.ComputeResourceAdaptor;
 import org.apache.airavata.agents.api.FileMetadata;
 import org.apache.airavata.agents.api.StorageResourceAdaptor;
 import org.apache.airavata.agents.streaming.TransferResult;
@@ -100,14 +101,15 @@ public abstract class DataStagingTask extends AiravataTask {
     }
 
     @SuppressWarnings("WeakerAccess")
-    protected AgentAdaptor getComputeResourceAdaptor(AdaptorSupport adaptorSupport) throws TaskOnFailException {
+    protected ComputeResourceAdaptor getComputeResourceAdaptor(AdaptorSupport adaptorSupport) throws TaskOnFailException {
         String computeId = null;
         try {
             computeId = getTaskContext().getComputeResourceId();
-            return adaptorSupport.fetchAdaptor(
+            return adaptorSupport.fetchComputeResourceAdaptor(
                     getTaskContext().getGatewayId(),
                     computeId,
                     getTaskContext().getJobSubmissionProtocol(),
+                    getTaskContext().getDataMovementProtocol(),
                     getTaskContext().getComputeResourceCredentialToken(),
                     getTaskContext().getComputeResourceLoginUserName());
         } catch (Exception e) {

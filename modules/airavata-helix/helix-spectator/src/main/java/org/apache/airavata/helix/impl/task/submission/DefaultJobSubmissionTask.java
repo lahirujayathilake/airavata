@@ -20,6 +20,7 @@
 package org.apache.airavata.helix.impl.task.submission;
 
 import org.apache.airavata.agents.api.AgentAdaptor;
+import org.apache.airavata.agents.api.ComputeResourceAdaptor;
 import org.apache.airavata.agents.api.JobSubmissionOutput;
 import org.apache.airavata.common.utils.AiravataUtils;
 import org.apache.airavata.common.utils.ServerSettings;
@@ -56,15 +57,16 @@ public class DefaultJobSubmissionTask extends JobSubmissionTask {
 
         defaultJSTaskCounter.inc();
         String jobId = null;
-        AgentAdaptor adaptor;
+        ComputeResourceAdaptor adaptor;
         String computeId = null;
 
         try {
             computeId = getTaskContext().getComputeResourceId();
-            adaptor = taskHelper.getAdaptorSupport().fetchAdaptor(
+            adaptor = taskHelper.getAdaptorSupport().fetchComputeResourceAdaptor(
                     getTaskContext().getGatewayId(),
                     computeId,
                     getTaskContext().getJobSubmissionProtocol(),
+                    getTaskContext().getDataMovementProtocol(),
                     getTaskContext().getComputeResourceCredentialToken(),
                     getTaskContext().getComputeResourceLoginUserName());
         } catch (Exception e) {
@@ -150,7 +152,7 @@ public class DefaultJobSubmissionTask extends JobSubmissionTask {
                 jobModel.setJobStatuses(Collections.singletonList(jobStatus));
                 saveAndPublishJobStatus(jobModel);
 
-                if (verifyJobSubmissionByJobId(adaptor, jobId)) {
+                if (verifyJobSubmissionByJobId(adaptor.jobSubmissionAdaptor(), jobId)) {
                     jobStatus.setJobState(JobState.QUEUED);
                     jobStatus.setReason("Verification step succeeded");
                     jobStatus.setTimeOfStateChange(AiravataUtils.getCurrentTimestamp().getTime());
@@ -162,7 +164,7 @@ public class DefaultJobSubmissionTask extends JobSubmissionTask {
 
                 int verificationTryCount = 0;
                 while (verificationTryCount++ < 3) {
-                    String verifyJobId = verifyJobSubmission(adaptor, jobModel.getJobName(), getTaskContext().getComputeResourceLoginUserName());
+                    String verifyJobId = verifyJobSubmission(adaptor.jobSubmissionAdaptor(), jobModel.getJobName(), getTaskContext().getComputeResourceLoginUserName());
                     if (verifyJobId != null && !verifyJobId.isEmpty()) {
                         // JobStatus either changed from SUBMITTED to QUEUED or directly to QUEUED
                         jobId = verifyJobId;
@@ -237,7 +239,7 @@ public class DefaultJobSubmissionTask extends JobSubmissionTask {
             if (jobId != null && !jobId.isEmpty()) {
                 logger.warn("Job " + jobId + " has already being submitted. Trying to cancel the job");
                 try {
-                    boolean cancelled = cancelJob(adaptor, jobId);
+                    boolean cancelled = cancelJob(adaptor.jobSubmissionAdaptor(), jobId);
                     if (cancelled) {
                         logger.info("Job " + jobId + " cancellation triggered");
                     } else {

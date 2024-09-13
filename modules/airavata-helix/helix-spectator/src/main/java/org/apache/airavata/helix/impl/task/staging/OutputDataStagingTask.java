@@ -21,6 +21,7 @@ package org.apache.airavata.helix.impl.task.staging;
 
 import org.apache.airavata.agents.api.AgentAdaptor;
 import org.apache.airavata.agents.api.AgentException;
+import org.apache.airavata.agents.api.ComputeResourceAdaptor;
 import org.apache.airavata.agents.api.StorageResourceAdaptor;
 import org.apache.airavata.helix.impl.task.TaskContext;
 import org.apache.airavata.helix.impl.task.TaskOnFailException;
@@ -113,7 +114,7 @@ public class OutputDataStagingTask extends DataStagingTask {
             StorageResourceAdaptor storageResourceAdaptor = getStorageAdaptor(taskHelper.getAdaptorSupport());
 
             // Fetch and validate compute resource adaptor
-            AgentAdaptor adaptor = getComputeResourceAdaptor(taskHelper.getAdaptorSupport());
+            ComputeResourceAdaptor adaptor = getComputeResourceAdaptor(taskHelper.getAdaptorSupport());
 
             List<URI> destinationURIs = new ArrayList<URI>();
 
@@ -127,7 +128,7 @@ public class OutputDataStagingTask extends DataStagingTask {
                 logger.debug("Destination parent path " + destParentPath + ", source parent path " + sourceParentPath);
                 List<String> filePaths;
                 try {
-                    filePaths = adaptor.getFileNameFromExtension(sourceFileName, sourceParentPath);
+                    filePaths = adaptor.jobSubmissionAdaptor().getFileNameFromExtension(sourceFileName, sourceParentPath);
 
                     if (logger.isTraceEnabled()) {
                         filePaths.forEach(fileName -> logger.trace("File found : " + fileName));
@@ -155,7 +156,7 @@ public class OutputDataStagingTask extends DataStagingTask {
                     //Wildcard support is only enabled for output data staging
                     assert processOutput != null;
                     logger.info("Transferring file " + sourceFileName);
-                    boolean transferred = transferFileToStorage(newSourceURI.getPath(), destinationURI.getPath(), sourceFileName, adaptor, storageResourceAdaptor);
+                    boolean transferred = transferFileToStorage(newSourceURI.getPath(), destinationURI.getPath(), sourceFileName, adaptor.dataMovementAdaptor(), storageResourceAdaptor);
                     if (transferred) {
                         destinationURIs.add(destinationURI);
                     } else {
@@ -184,7 +185,7 @@ public class OutputDataStagingTask extends DataStagingTask {
                 // Uploading output file to the storage resource
                 assert processOutput != null;
                 boolean transferred = transferFileToStorage(sourceURI.getPath(), destinationURI.getPath(),
-                        sourceFileName, adaptor, storageResourceAdaptor);
+                        sourceFileName, adaptor.dataMovementAdaptor(), storageResourceAdaptor);
                 if (transferred) {
                     saveExperimentOutput(processOutput.getName(), escapeSpecialCharacters(destinationURI.toString()));
                 } else {

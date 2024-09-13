@@ -20,6 +20,7 @@
 package org.apache.airavata.helix.impl.task.staging;
 
 import org.apache.airavata.agents.api.AgentAdaptor;
+import org.apache.airavata.agents.api.ComputeResourceAdaptor;
 import org.apache.airavata.agents.api.StorageResourceAdaptor;
 import org.apache.airavata.helix.impl.task.TaskContext;
 import org.apache.airavata.helix.impl.task.TaskOnFailException;
@@ -84,14 +85,14 @@ public class InputDataStagingTask extends DataStagingTask {
                 // Fetch and validate storage adaptor
                 StorageResourceAdaptor storageResourceAdaptor = getStorageAdaptor(taskHelper.getAdaptorSupport());
                 // Fetch and validate compute resource adaptor
-                AgentAdaptor adaptor = getComputeResourceAdaptor(taskHelper.getAdaptorSupport());
+                ComputeResourceAdaptor adaptor = getComputeResourceAdaptor(taskHelper.getAdaptorSupport());
 
                 for (String url : sourceUrls) {
                     URI sourceURI = new URI(url);
                     URI destinationURI = new URI(dataStagingTaskModel.getDestination());
 
                     logger.info("Source file " + sourceURI.getPath() + ", destination uri " + destinationURI.getPath() + " for task " + getTaskId());
-                    transferFileToComputeResource(sourceURI.getPath(), destinationURI.getPath(), adaptor, storageResourceAdaptor);
+                    transferFileToComputeResource(sourceURI.getPath(), destinationURI.getPath(), adaptor.dataMovementAdaptor(), storageResourceAdaptor);
                 }
 
             } catch (URISyntaxException e) {
